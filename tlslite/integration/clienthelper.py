@@ -1,19 +1,8 @@
-# Authors: 
-#   Trevor Perrin
-#   Dimitris Moraitis - Anon ciphersuites
-#
-# See the LICENSE file for legal information regarding use of this file.
 
-"""
-A helper class for using TLS Lite with stdlib clients
-(httplib, xmlrpclib, imaplib, poplib).
-"""
 
 from tlslite.checker import Checker
 
 class ClientHelper(object):
-    """This is a helper class used to integrate TLS Lite with various
-    TLS clients (e.g. poplib, smtplib, httplib, etc.)"""
 
     def __init__(self,
               username=None, password=None,
@@ -77,19 +66,16 @@ class ClientHelper(object):
         self.checker = None
         self.anon = anon
 
-        #SRP Authentication
         if username and password and not \
                 (certChain or privateKey):
             self.username = username
             self.password = password
 
-        #Certificate Chain Authentication
         elif certChain and privateKey and not \
                 (username or password):
             self.certChain = certChain
             self.privateKey = privateKey
 
-        #No Authentication
         elif not password and not username and not \
                 certChain and not privateKey:
             pass
@@ -103,20 +89,4 @@ class ClientHelper(object):
         self.tlsSession = None
 
     def _handshake(self, tlsConnection):
-        if self.username and self.password:
-            tlsConnection.handshakeClientSRP(username=self.username,
-                                             password=self.password,
-                                             checker=self.checker,
-                                             settings=self.settings,
-                                             session=self.tlsSession)
-        elif self.anon:
-            tlsConnection.handshakeClientAnonymous(session=self.tlsSession,
-                                                settings=self.settings,
-                                                checker=self.checker)
-        else:
-            tlsConnection.handshakeClientCert(certChain=self.certChain,
-                                              privateKey=self.privateKey,
-                                              checker=self.checker,
-                                              settings=self.settings,
-                                              session=self.tlsSession)
-        self.tlsSession = tlsConnection.session
+        pass

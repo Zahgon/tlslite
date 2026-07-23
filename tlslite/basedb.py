@@ -1,15 +1,8 @@
-# Authors: 
-#   Trevor Perrin
-#   Martin von Loewis - python 3 port
-#
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Base class for SharedKeyDB and VerifierDB."""
 
 try:
     import anydbm
 except ImportError:
-    # Python 3
     import dbm as anydbm
 import threading
 
@@ -36,19 +29,7 @@ class BaseDB(object):
             self.db = {}
 
     def open(self):
-        """Open a pre-existing on-disk database.
-
-        @raise anydbm.error: If there's a problem opening the database.
-        @raise ValueError: If the database is not of the right type.
-        """
-        if not self.filename:
-            raise ValueError("Can only open on-disk databases")
-        self.db = anydbm.open(self.filename, "w") #raises anydbm.error
-        try:
-            if self.db["--Reserved--type"] != self.type:
-                raise ValueError("Not a %s database" % self.type)
-        except KeyError:
-            raise ValueError("Not a recognized database")
+        pass
 
     def __getitem__(self, username):
         if self.db == None:
@@ -109,22 +90,7 @@ class BaseDB(object):
             self.lock.release()
 
     def check(self, username, param):
-        value = self.__getitem__(username)
-        return self._checkItem(value, username, param)
+        pass
 
     def keys(self):
-        """Return a list of usernames in the database.
-
-        @rtype: list
-        @return: The usernames in the database.
-        """
-        if self.db == None:
-            raise AssertionError("DB not open")
-
-        self.lock.acquire()
-        try:
-            usernames = self.db.keys()
-        finally:
-            self.lock.release()
-        usernames = [u for u in usernames if not u.startswith("--Reserved--")]
-        return usernames
+        pass

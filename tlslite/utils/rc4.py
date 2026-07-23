@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Abstract class for RC4."""
 
 
 class RC4(object):

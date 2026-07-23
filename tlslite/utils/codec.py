@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Classes for reading/writing binary data (such as TLS records)."""
 
 from .compat import *
 

@@ -1,13 +1,10 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Pure-Python RC4 implementation."""
 
 from .rc4 import RC4
 from .cryptomath import *
 
 def new(key):
-    return Python_RC4(key)
+    pass
 
 class Python_RC4(RC4):
     def __init__(self, keyBytes):

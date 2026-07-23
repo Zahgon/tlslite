@@ -1,30 +1,13 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""OpenSSL/M2Crypto RSA implementation."""
 
 from .cryptomath import *
 
 from .rsakey import *
 from .python_rsakey import Python_RSAKey
 
-#copied from M2Crypto.util.py, so when we load the local copy of m2
-#we can still use it
 def password_callback(v, prompt1='Enter private key passphrase:',
                            prompt2='Verify passphrase:'):
-    from getpass import getpass
-    while 1:
-        try:
-            p1=getpass(prompt1)
-            if v:
-                p2=getpass(prompt2)
-                if p1==p2:
-                    break
-            else:
-                break
-        except KeyboardInterrupt:
-            return None
-    return p1
+    pass
 
 
 if m2cryptoLoaded:
@@ -70,13 +53,13 @@ if m2cryptoLoaded:
             m = bytesToNumber(bytearray(s))
             return m
 
-        def acceptsPassword(self): return True
+        pass
 
         def write(self, password=None):
             bio = m2.bio_new(m2.bio_s_mem())
             if self._hasPrivateKey:
                 if password:
-                    def f(v): return password
+                    pass
                     m2.rsa_write_key(self.rsa, bio, m2.des_ede_cbc(), f)
                 else:
                     def f(): pass
@@ -90,15 +73,10 @@ if m2cryptoLoaded:
             return s
 
         def generate(bits):
-            key = OpenSSL_RSAKey()
-            def f():pass
-            key.rsa = m2.rsa_generate_key(bits, 3, f)
-            key._hasPrivateKey = True
-            return key
+            pass
         generate = staticmethod(generate)
 
         def parse(s, passwordCallback=None):
-            # Skip forward to the first PEM header
             start = s.find("-----BEGIN ")
             if start == -1:
                 raise SyntaxError()
@@ -108,30 +86,21 @@ if m2cryptoLoaded:
                     callback = password_callback
                 else:
                     def f(v, prompt1=None, prompt2=None):
-                        return passwordCallback()
+                        pass
                     callback = f
                 bio = m2.bio_new(m2.bio_s_mem())
                 try:
                     m2.bio_write(bio, s)
                     key = OpenSSL_RSAKey()
-                    # parse SSLay format PEM file
                     if s.startswith("-----BEGIN RSA PRIVATE KEY-----"):
                         def f():pass
                         key.rsa = m2.rsa_read_key(bio, callback)
                         if key.rsa == None:
                             raise SyntaxError()
                         key._hasPrivateKey = True
-                    # parse a standard PKCS#8 PEM file
                     elif s.startswith("-----BEGIN PRIVATE KEY-----"):
                         def f():pass
                         key.rsa = m2.pkey_read_pem(bio, callback)
-                        # the below code assumes RSA key while PKCS#8 files
-                        # (and by extension the EVP_PKEY structure) can be
-                        # also DSA or EC, thus the double check against None
-                        # (first if the file was properly loaded and second
-                        # if the file actually has a RSA key in it)
-                        # tlslite doesn't support DSA or EC so it's useless
-                        # to handle them in a different way
                         if key.rsa == None:
                             raise SyntaxError()
                         key.rsa = m2.pkey_get1_rsa(key.rsa)

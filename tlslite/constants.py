@@ -1,14 +1,4 @@
-# Authors: 
-#   Trevor Perrin
-#   Google - defining ClientCertificateType
-#   Google (adapted by Sam Rushing) - NPN support
-#   Dimitris Moraitis - Anon ciphersuites
-#   Dave Baggett (Arcode Corporation) - canonicalCipherName
-#   Yngve Pettersen (ported by Paul Sokolovsky) - TLS 1.2
-#
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Constants used in various places."""
 
 class CertificateType:
     x509 = 0
@@ -69,32 +59,6 @@ class AlertLevel:
     fatal = 2
 
 class AlertDescription:
-    """
-    @cvar bad_record_mac: A TLS record failed to decrypt properly.
-
-    If this occurs during a SRP handshake it most likely
-    indicates a bad password.  It may also indicate an implementation
-    error, or some tampering with the data in transit.
-
-    This alert will be signalled by the server if the SRP password is bad.  It
-    may also be signalled by the server if the SRP username is unknown to the
-    server, but it doesn't wish to reveal that fact.
-
-
-    @cvar handshake_failure: A problem occurred while handshaking.
-
-    This typically indicates a lack of common ciphersuites between client and
-    server, or some other disagreement (about SRP parameters or key sizes,
-    for example).
-
-    @cvar protocol_version: The other party's SSL/TLS version was unacceptable.
-
-    This indicates that the client and server couldn't agree on which version
-    of SSL or TLS to use.
-
-    @cvar user_canceled: The handshake is being cancelled for some reason.
-
-    """
 
     close_notify = 0
     unexpected_message = 10
@@ -125,13 +89,8 @@ class AlertDescription:
 
 
 class CipherSuite:
-    # Weird pseudo-ciphersuite from RFC 5746
-    # Signals that "secure renegotiation" is supported
-    # We actually don't do any renegotiation, but this
-    # prevents renegotiation attacks
     TLS_EMPTY_RENEGOTIATION_INFO_SCSV = 0x00FF
 
-    # draft-ietf-tls-downgrade-scsv-03
     TLS_FALLBACK_SCSV = 0x5600
     
     TLS_SRP_SHA_WITH_3DES_EDE_CBC_SHA  = 0xC01A
@@ -202,36 +161,11 @@ class CipherSuite:
 
     @staticmethod
     def filterForVersion(suites, minVersion, maxVersion):
-        """ Returns a copy of suites after removing any entries which are not
-        enabled by any version of TLS between minVersion and maxVersion. """
-        excludeSuites = []
-        if maxVersion < (3, 3):
-            excludeSuites += CipherSuite.sha256Suites
-        return [s for s in suites if s not in excludeSuites]
+        pass
 
     @staticmethod
     def _filterSuites(suites, settings):
-        macNames = settings.macNames
-        cipherNames = settings.cipherNames
-        macSuites = []
-        if "sha" in macNames:
-            macSuites += CipherSuite.shaSuites
-        if "sha256" in macNames:
-            macSuites += CipherSuite.sha256Suites
-        if "md5" in macNames:
-            macSuites += CipherSuite.md5Suites
-
-        cipherSuites = []
-        if "aes128" in cipherNames:
-            cipherSuites += CipherSuite.aes128Suites
-        if "aes256" in cipherNames:
-            cipherSuites += CipherSuite.aes256Suites
-        if "3des" in cipherNames:
-            cipherSuites += CipherSuite.tripleDESSuites
-        if "rc4" in cipherNames:
-            cipherSuites += CipherSuite.rc4Suites
-
-        return [s for s in suites if s in macSuites and s in cipherSuites]
+        pass
 
     srpSuites = []
     srpSuites.append(TLS_SRP_SHA_WITH_AES_256_CBC_SHA)
@@ -240,7 +174,7 @@ class CipherSuite:
     
     @staticmethod
     def getSrpSuites(settings):
-        return CipherSuite._filterSuites(CipherSuite.srpSuites, settings)
+        pass
 
     srpCertSuites = []
     srpCertSuites.append(TLS_SRP_SHA_RSA_WITH_AES_256_CBC_SHA)
@@ -249,13 +183,13 @@ class CipherSuite:
     
     @staticmethod
     def getSrpCertSuites(settings):
-        return CipherSuite._filterSuites(CipherSuite.srpCertSuites, settings)
+        pass
 
     srpAllSuites = srpSuites + srpCertSuites
 
     @staticmethod
     def getSrpAllSuites(settings):
-        return CipherSuite._filterSuites(CipherSuite.srpAllSuites, settings)
+        pass
 
     certSuites = []
     certSuites.append(TLS_RSA_WITH_AES_256_CBC_SHA256)
@@ -269,7 +203,7 @@ class CipherSuite:
     
     @staticmethod
     def getCertSuites(settings):
-        return CipherSuite._filterSuites(CipherSuite.certSuites, settings)
+        pass
 
     anonSuites = []
     anonSuites.append(TLS_DH_ANON_WITH_AES_256_CBC_SHA)
@@ -277,36 +211,17 @@ class CipherSuite:
     
     @staticmethod
     def getAnonSuites(settings):
-        return CipherSuite._filterSuites(CipherSuite.anonSuites, settings)
+        pass
 
     @staticmethod
     def canonicalCipherName(ciphersuite):
-        "Return the canonical name of the cipher whose number is provided."
-        if ciphersuite in CipherSuite.aes128Suites:
-            return "aes128"
-        elif ciphersuite in CipherSuite.aes256Suites:
-            return "aes256"
-        elif ciphersuite in CipherSuite.rc4Suites:
-            return "rc4"
-        elif ciphersuite in CipherSuite.tripleDESSuites:
-            return "3des"
-        else:
-            return None
+        pass
 
     @staticmethod
     def canonicalMacName(ciphersuite):
-        "Return the canonical name of the MAC whose number is provided."
-        if ciphersuite in CipherSuite.shaSuites:
-            return "sha"
-        elif ciphersuite in CipherSuite.md5Suites:
-            return "md5"
-        else:
-            return None
+        pass
 
 
-# The following faults are induced as part of testing.  The faultAlerts
-# dictionary describes the allowed alerts that may be triggered by these
-# faults.
 class Fault:
     badUsername = 101
     badPassword = 102

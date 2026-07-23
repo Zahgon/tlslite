@@ -1,25 +1,15 @@
-# Authors: 
-#   Trevor Perrin
-#   Kees Bos - Added ignoreAbruptClose parameter
-#   Dimitris Moraitis - Anon ciphersuites
-#   Martin von Loewis - python 3 port
-#
-# See the LICENSE file for legal information regarding use of this file.
 
-"""TLS Lite + httplib."""
 
 import socket
 try:
     import httplib
 except ImportError:
-    # Python 3
     from http import client as httplib
 from tlslite.tlsconnection import TLSConnection
 from tlslite.integration.clienthelper import ClientHelper
 
 
 class HTTPTLSConnection(httplib.HTTPConnection, ClientHelper):
-    """This class extends L{httplib.HTTPConnection} to support TLS."""
 
     def __init__(self, host, port=None, strict=None, 
                 timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
@@ -111,7 +101,4 @@ class HTTPTLSConnection(httplib.HTTPConnection, ClientHelper):
                  anon)
 
     def connect(self):
-        httplib.HTTPConnection.connect(self)
-        self.sock = TLSConnection(self.sock)
-        self.sock.ignoreAbruptClose = self.ignoreAbruptClose
-        ClientHelper._handshake(self, self.sock)
+        pass

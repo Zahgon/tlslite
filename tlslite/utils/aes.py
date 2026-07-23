@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Abstract class for AES."""
 
 class AES(object):
     def __init__(self, key, mode, IV, implementation):
@@ -23,12 +20,8 @@ class AES(object):
         else:
             raise AssertionError()
 
-    #CBC-Mode encryption, returns ciphertext
-    #WARNING: *MAY* modify the input as well
     def encrypt(self, plaintext):
         assert(len(plaintext) % 16 == 0)
 
-    #CBC-Mode decryption, returns plaintext
-    #WARNING: *MAY* modify the input as well
     def decrypt(self, ciphertext):
         assert(len(ciphertext) % 16 == 0)

@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""OpenSSL/M2Crypto AES implementation."""
 
 from .cryptomath import *
 from .aes import *
@@ -9,7 +6,7 @@ from .aes import *
 if m2cryptoLoaded:
 
     def new(key, mode, IV):
-        return OpenSSL_AES(key, mode, IV)
+        pass
 
     class OpenSSL_AES(AES):
 
@@ -40,12 +37,8 @@ if m2cryptoLoaded:
         def decrypt(self, ciphertext):
             AES.decrypt(self, ciphertext)
             context = self._createContext(0)
-            #I think M2Crypto has a bug - it fails to decrypt and return the last block passed in.
-            #To work around this, we append sixteen zeros to the string, below:
             plaintext = m2.cipher_update(context, ciphertext+('\0'*16))
 
-            #If this bug is ever fixed, then plaintext will end up having a garbage
-            #plaintext block on the end.  That's okay - the below code will discard it.
             plaintext = plaintext[:len(ciphertext)]
             m2.cipher_ctx_free(context)
             self.IV = ciphertext[-self.block_size:]

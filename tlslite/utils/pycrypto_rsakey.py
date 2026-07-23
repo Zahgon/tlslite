@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""PyCrypto RSA implementation."""
 
 from .cryptomath import *
 
@@ -37,9 +34,5 @@ if pycryptoLoaded:
             return m
 
         def generate(bits):
-            key = PyCrypto_RSAKey()
-            def f(numBytes):
-                return bytes(getRandomBytes(numBytes))
-            key.rsa = RSA.generate(bits, f)
-            return key
+            pass
         generate = staticmethod(generate)

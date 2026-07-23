@@ -1,10 +1,4 @@
-# Copyright (c) 2014, Hubert Kario
-#
-# See the LICENSE file for legal information regarding use of this file.
 
-""" Helper package for handling TLS extensions encountered in ClientHello
-and ServerHello messages.
-"""
 
 from __future__ import generators
 from .utils.codec import Writer, Parser
@@ -13,40 +7,6 @@ from .constants import NameType, ExtensionType
 from .errors import TLSInternalError
 
 class TLSExtension(object):
-    """
-    This class handles the generic information about TLS extensions used by
-    both sides of connection in Client Hello and Server Hello messages.
-    See U{RFC 4366<https://tools.ietf.org/html/rfc4366>} for more info.
-
-    It is used as a base class for specific users and as a way to store
-    extensions that are not implemented in library.
-
-    @type extType: int
-    @ivar extType: a 2^16-1 limited integer specifying the type of the
-        extension that it contains, e.g. 0 indicates server name extension
-
-    @type extData: bytearray
-    @ivar extData: a byte array containing the value of the extension as
-        to be written on the wire
-
-    @type serverType: boolean
-    @ivar serverType: indicates that the extension was parsed with ServerHello
-        specific parser, otherwise it used universal or ClientHello specific
-        parser
-
-    @type _universalExtensions: dict
-    @cvar _universalExtensions: dictionary with concrete implementations of
-        specific TLS extensions where key is the numeric value of the extension
-        ID. Contains ClientHello version of extensions or universal
-        implementations
-
-    @type _serverExtensions: dict
-    @cvar _serverExtensions: dictionary with concrete implementations of
-        specific TLS extensions where key is the numeric value of the extension
-        ID. Includes only those extensions that require special handlers for
-        ServerHello versions.
-    """
-    # actual definition at the end of file, after definitions of all classes
     _universalExtensions = {}
     _serverExtensions = {}
 
@@ -116,22 +76,18 @@ class TLSExtension(object):
         extType = p.get(2)
         ext_length = p.get(2)
 
-        # first check if we shouldn't use server side parser
         if self.serverType and extType in self._serverExtensions:
             ext = self._serverExtensions[extType]()
             ext_parser = Parser(p.getFixBytes(ext_length))
             ext = ext.parse(ext_parser)
             return ext
 
-        # then fallback to universal/ClientHello-specific parsers
         if extType in self._universalExtensions:
             ext = self._universalExtensions[extType]()
             ext_parser = Parser(p.getFixBytes(ext_length))
             ext = ext.parse(ext_parser)
             return ext
 
-        # finally, just save the extension data as there are extensions which
-        # don't require specific handlers and indicate option by mere presence
         self.extType = extType
         self.extData = p.getFixBytes(ext_length)
         assert len(self.extData) == ext_length
@@ -159,47 +115,6 @@ class TLSExtension(object):
                                             self.serverType)
 
 class SNIExtension(TLSExtension):
-    """
-    Class for handling Server Name Indication (server_name) extension from
-    RFC 4366.
-
-    Note that while usually the client does advertise just one name, it is
-    possible to provide a list of names, each of different type.
-    The type is a single byte value (represented by ints), the names are
-    opaque byte strings, in case of DNS host names (records of type 0) they
-    are UTF-8 encoded domain names (without the ending dot).
-
-    @type hostNames: tuple of bytearrays
-    @ivar hostNames: tuple of hostnames (server name records of type 0)
-        advertised in the extension. Note that it may not include all names
-        from client hello as the client can advertise other types. Also note
-        that while it's not possible to change the returned array in place, it
-        is possible to assign a new set of names. IOW, this won't work::
-
-           sni_extension.hostNames[0] = bytearray(b'example.com')
-
-        while this will work::
-
-           names = list(sni_extension.hostNames)
-           names[0] = bytearray(b'example.com')
-           sni_extension.hostNames = names
-
-
-    @type serverNames: list of L{ServerName}
-    @ivar serverNames: list of all names advertised in extension.
-        L{ServerName} is a namedtuple with two elements, the first
-        element (type) defines the type of the name (encoded as int)
-        while the other (name) is a bytearray that carries the value.
-        Known types are defined in L{tlslite.constants.NameType}.
-        The list will be empty if the on the wire extension had and empty
-        list while it will be None if the extension was empty.
-
-    @type extType: int
-    @ivar extType: numeric type of SNIExtension, i.e. 0
-
-    @type extData: bytearray
-    @ivar extData: raw representation of the extension
-    """
 
     ServerName = namedtuple('ServerName', 'name_type name')
 
@@ -265,72 +180,23 @@ class SNIExtension(TLSExtension):
 
     @property
     def extType(self):
-        """ Return the type of TLS extension, in this case - 0
-
-        @rtype: int
-        """
-        return ExtensionType.server_name
+        pass
 
     @property
     def hostNames(self):
-        """ Returns a simulated list of hostNames from the extension.
-
-        @rtype: tuple of bytearrays
-        """
-        # because we can't simulate assignments to array elements we return
-        # an immutable type
-        if self.serverNames is None:
-            return tuple()
-        else:
-            return tuple([x.name for x in self.serverNames if \
-                x.name_type == NameType.host_name])
+        pass
 
     @hostNames.setter
     def hostNames(self, hostNames):
-        """ Removes all host names from the extension and replaces them by
-        names in X{hostNames} parameter.
-
-        Newly added parameters will be added at the I{beginning} of the list
-        of extensions.
-
-        @type hostNames: iterable of bytearrays
-        @param hostNames: host names to replace the old server names of type 0
-        """
-
-        self.serverNames = \
-                [SNIExtension.ServerName(NameType.host_name, x) for x in \
-                    hostNames] + \
-                [x for x in self.serverNames if \
-                    x.name_type != NameType.host_name]
+        pass
 
     @hostNames.deleter
     def hostNames(self):
-        """ Remove all host names from extension, leaves other name types
-        unmodified
-        """
-        self.serverNames = [x for x in self.serverNames if \
-                x.name_type != NameType.host_name]
+        pass
 
     @property
     def extData(self):
-        """ raw encoding of extension data, without type and length header
-
-        @rtype: bytearray
-        """
-        if self.serverNames is None:
-            return bytearray(0)
-
-        w2 = Writer()
-        for server_name in self.serverNames:
-            w2.add(server_name.name_type, 1)
-            w2.add(len(server_name.name), 2)
-            w2.bytes += server_name.name
-
-        # note that when the array is empty we write it as array of length 0
-        w = Writer()
-        w.add(len(w2.bytes), 2)
-        w.bytes += w2.bytes
-        return w.bytes
+        pass
 
     def write(self):
         """ Returns encoded extension, as encoded on the wire
@@ -377,19 +243,6 @@ class SNIExtension(TLSExtension):
         return self
 
 class ClientCertTypeExtension(TLSExtension):
-    """
-    This class handles the Certificate Type extension (variant sent by client)
-    defined in RFC 6091.
-
-    @type extType: int
-    @ivar extType: numeric type of Certificate Type extension, i.e. 9
-
-    @type extData: bytearray
-    @ivar extData: raw representation of the extension data
-
-    @type certTypes: list of int
-    @ivar certTypes: list of certificate type identifiers (each one byte long)
-    """
 
     def __init__(self):
         """
@@ -410,31 +263,11 @@ class ClientCertTypeExtension(TLSExtension):
 
     @property
     def extType(self):
-        """
-        Return the type of TLS extension, in this case - 9
-
-        @rtype: int
-        """
-
-        return ExtensionType.cert_type
+        pass
 
     @property
     def extData(self):
-        """
-        Return the raw encoding of this extension
-
-        @rtype: bytearray
-        """
-
-        if self.certTypes is None:
-            return bytearray(0)
-
-        w = Writer()
-        w.add(len(self.certTypes), 1)
-        for c_type in self.certTypes:
-            w.add(c_type, 1)
-
-        return w.bytes
+        pass
 
     def create(self, certTypes=None):
         """
@@ -467,19 +300,6 @@ class ClientCertTypeExtension(TLSExtension):
         return self
 
 class ServerCertTypeExtension(TLSExtension):
-    """
-    This class handles the Certificate Type extension (variant sent by server)
-    defined in RFC 6091.
-
-    @type extType: int
-    @ivar extType: byneruc ttoe if Certificate Type extension, i.e. 9
-
-    @type extData: bytearray
-    @ivar extData: raw representation of the extension data
-
-    @type cert_type: int
-    @ivar cert_type: the certificate type selected by server
-    """
 
     def __init__(self):
         """
@@ -499,27 +319,11 @@ class ServerCertTypeExtension(TLSExtension):
 
     @property
     def extType(self):
-        """
-        Return the type of TLS extension, in this case - 9
-
-        @rtype: int
-        """
-        return ExtensionType.cert_type
+        pass
 
     @property
     def extData(self):
-        """
-        Return the raw encoding of the extension data
-
-        @rtype: bytearray
-        """
-        if self.cert_type is None:
-            return bytearray(0)
-
-        w = Writer()
-        w.add(self.cert_type, 1)
-
-        return w.bytes
+        pass
 
     def create(self, val):
         """Create an instance for sending the extension to client.
@@ -543,19 +347,6 @@ class ServerCertTypeExtension(TLSExtension):
         return self
 
 class SRPExtension(TLSExtension):
-    """
-    This class handles the Secure Remote Password protocol TLS extension
-    defined in RFC 5054.
-
-    @type extType: int
-    @ivar extType: numeric type of SRPExtension, i.e. 12
-
-    @type extData: bytearray
-    @ivar extData: raw representation of extension data
-
-    @type identity: bytearray
-    @ivar identity: UTF-8 encoding of user name
-    """
 
     def __init__(self):
         """
@@ -576,30 +367,11 @@ class SRPExtension(TLSExtension):
 
     @property
     def extType(self):
-        """
-        Return the type of TLS extension, in this case - 12
-
-        @rtype: int
-        """
-
-        return ExtensionType.srp
+        pass
 
     @property
     def extData(self):
-        """
-        Return raw data encoding of the extension
-
-        @rtype: bytearray
-        """
-
-        if self.identity is None:
-            return bytearray(0)
-
-        w = Writer()
-        w.add(len(self.identity), 1)
-        w.addFixSeq(self.identity, 1)
-
-        return w.bytes
+        pass
 
     def create(self, identity=None):
         """ Create and instance of SRPExtension with specified protocols
@@ -637,18 +409,6 @@ class SRPExtension(TLSExtension):
         return self
 
 class NPNExtension(TLSExtension):
-    """
-    This class handles the unofficial Next Protocol Negotiation TLS extension.
-
-    @type protocols: list of bytearrays
-    @ivar protocols: list of protocol names supported by the server
-
-    @type extType: int
-    @ivar extType: numeric type of NPNExtension, i.e. 13172
-
-    @type extData: bytearray
-    @ivar extData: raw representation of extension data
-    """
 
     def __init__(self):
         """
@@ -669,27 +429,11 @@ class NPNExtension(TLSExtension):
 
     @property
     def extType(self):
-        """ Return the type of TLS extension, in this case - 13172
-
-        @rtype: int
-        """
-        return ExtensionType.supports_npn
+        pass
 
     @property
     def extData(self):
-        """ Return the raw data encoding of the extension
-
-        @rtype: bytearray
-        """
-        if self.protocols is None:
-            return bytearray(0)
-
-        w = Writer()
-        for prot in self.protocols:
-            w.add(len(prot), 1)
-            w.addFixSeq(prot, 1)
-
-        return w.bytes
+        pass
 
     def create(self, protocols=None):
         """ Create an instance of NPNExtension with specified protocols
@@ -719,21 +463,8 @@ class NPNExtension(TLSExtension):
         return self
 
 class TACKExtension(TLSExtension):
-    """
-    This class handles the server side TACK extension (see
-    draft-perrin-tls-tack-02).
-
-    @type tacks: list
-    @ivar tacks: list of L{TACK}'s supported by server
-
-    @type activation_flags: int
-    @ivar activation_flags: activation flags for the tacks
-    """
 
     class TACK(object):
-        """
-        Implementation of the single TACK
-        """
         def __init__(self):
             """
             Create a single TACK object
@@ -857,29 +588,11 @@ class TACKExtension(TLSExtension):
 
     @property
     def extType(self):
-        """
-        Returns the type of TLS extension, in this case - 62208
-
-        @rtype: int
-        """
-        return ExtensionType.tack
+        pass
 
     @property
     def extData(self):
-        """
-        Return the raw data encoding of the extension
-
-        @rtype: bytearray
-        """
-        w2 = Writer()
-        for t in self.tacks:
-            w2.bytes += t.write()
-
-        w = Writer()
-        w.add(len(w2.bytes), 2)
-        w.bytes += w2.bytes
-        w.add(self.activation_flags, 1)
-        return w.bytes
+        pass
 
     def create(self, tacks, activation_flags):
         """

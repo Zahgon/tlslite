@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""PyCrypto AES implementation."""
 
 from .cryptomath import *
 from .aes import *
@@ -10,7 +7,7 @@ if pycryptoLoaded:
     import Crypto.Cipher.AES
 
     def new(key, mode, IV):
-        return PyCrypto_AES(key, mode, IV)
+        pass
 
     class PyCrypto_AES(AES):
 

@@ -1,37 +1,5 @@
-# Authors:
-#   Bram Cohen
-#   Trevor Perrin - various changes
-#
-# See the LICENSE file for legal information regarding use of this file.
-# Also see Bram Cohen's statement below
 
-"""
-A pure python (slow) implementation of rijndael with a decent interface
 
-To include -
-
-from rijndael import rijndael
-
-To do a key setup -
-
-r = rijndael(key, block_size = 16)
-
-key must be a string of length 16, 24, or 32
-blocksize must be 16, 24, or 32. Default is 16
-
-To use -
-
-ciphertext = r.encrypt(plaintext)
-plaintext = r.decrypt(ciphertext)
-
-If any strings are of the wrong length a ValueError is thrown
-"""
-
-# ported from the Java reference code by Bram Cohen, bram@gawth.com, April 2001
-# this code is public domain, unless someone makes
-# an intellectual property claim against the reference
-# code, in which case it can be made public domain by
-# deleting all the comments and renaming all the variables
 
 import copy
 import string
@@ -40,7 +8,6 @@ shifts = [[[0, 0], [1, 3], [2, 2], [3, 1]],
           [[0, 0], [1, 5], [2, 4], [3, 3]],
           [[0, 0], [1, 7], [3, 5], [4, 4]]]
 
-# [keysize][block_size]
 num_rounds = {16: {16: 10, 24: 12, 32: 14}, 24: {16: 12, 24: 12, 32: 14}, 32: {16: 14, 24: 14, 32: 14}}
 
 A = [[1, 1, 1, 1, 1, 0, 0, 0],
@@ -52,8 +19,6 @@ A = [[1, 1, 1, 1, 1, 0, 0, 0],
      [1, 1, 1, 0, 0, 0, 1, 1],
      [1, 1, 1, 1, 0, 0, 0, 1]]
 
-# produce log and alog tables, needed for multiplying in the
-# field GF(2^m) (generator = 3)
 alog = [1]
 for i in range(255):
     j = (alog[-1] << 1) ^ alog[-1]
@@ -65,13 +30,9 @@ log = [0] * 256
 for i in range(1, 255):
     log[alog[i]] = i
 
-# multiply two elements of GF(2^m)
 def mul(a, b):
-    if a == 0 or b == 0:
-        return 0
-    return alog[(log[a & 0xFF] + log[b & 0xFF]) % 255]
+    pass
 
-# substitution box based on F^{-1}(x)
 box = [[0] * 8 for i in range(256)]
 box[1][7] = 1
 for i in range(2, 256):
@@ -81,7 +42,6 @@ for i in range(2, 256):
 
 B = [0, 1, 1, 0, 0, 0, 1, 1]
 
-# affine transform:  box[i] <- B + A*box[i]
 cox = [[0] * 8 for i in range(256)]
 for i in range(256):
     for t in range(8):
@@ -89,7 +49,6 @@ for i in range(256):
         for j in range(8):
             cox[i][t] ^= A[t][j] * box[i][j]
 
-# S-boxes and inverse S-boxes
 S =  [0] * 256
 Si = [0] * 256
 for i in range(256):
@@ -98,7 +57,6 @@ for i in range(256):
         S[i] ^= cox[i][t] << (7-t)
     Si[S[i] & 0xFF] = i
 
-# T-boxes
 G = [[2, 1, 1, 3],
     [3, 2, 1, 1],
     [1, 3, 2, 1],
@@ -137,14 +95,7 @@ for i in range(4):
         iG[i][j] = AA[i][j + 4]
 
 def mul4(a, bs):
-    if a == 0:
-        return 0
-    r = 0
-    for b in bs:
-        r <<= 8
-        if b != 0:
-            r = r | mul(a, b)
-    return r
+    pass
 
 T1 = []
 T2 = []
@@ -177,7 +128,6 @@ for t in range(256):
     U3.append(mul4(t, iG[2]))
     U4.append(mul4(t, iG[3]))
 
-# round constants
 rcon = [1]
 r = 1
 for t in range(1, 30):
@@ -212,20 +162,16 @@ class rijndael:
 
         ROUNDS = num_rounds[len(key)][block_size]
         BC = block_size // 4
-        # encryption round keys
         Ke = [[0] * BC for i in range(ROUNDS + 1)]
-        # decryption round keys
         Kd = [[0] * BC for i in range(ROUNDS + 1)]
         ROUND_KEY_COUNT = (ROUNDS + 1) * BC
         KC = len(key) // 4
 
-        # copy user material bytes into temporary ints
         tk = []
         for i in range(0, KC):
             tk.append((key[i * 4] << 24) | (key[i * 4 + 1] << 16) |
                 (key[i * 4 + 2] << 8) | key[i * 4 + 3])
 
-        # copy values into round key arrays
         t = 0
         j = 0
         while j < KC and t < ROUND_KEY_COUNT:
@@ -236,7 +182,6 @@ class rijndael:
         tt = 0
         rconpointer = 0
         while t < ROUND_KEY_COUNT:
-            # extrapolate using phi (the round key evolution function)
             tt = tk[KC - 1]
             tk[0] ^= (S[(tt >> 16) & 0xFF] & 0xFF) << 24 ^  \
                      (S[(tt >>  8) & 0xFF] & 0xFF) << 16 ^  \
@@ -257,14 +202,12 @@ class rijndael:
                               (S[(tt >> 24) & 0xFF] & 0xFF) << 24
                 for i in range(KC // 2 + 1, KC):
                     tk[i] ^= tk[i-1]
-            # copy values into round key arrays
             j = 0
             while j < KC and t < ROUND_KEY_COUNT:
                 Ke[t // BC][t % BC] = tk[j]
                 Kd[ROUNDS - (t // BC)][t % BC] = tk[j]
                 j += 1
                 t += 1
-        # inverse MixColumn where needed
         for r in range(1, ROUNDS):
             for j in range(BC):
                 tt = Kd[r][j]
@@ -292,15 +235,12 @@ class rijndael:
         s2 = shifts[SC][2][0]
         s3 = shifts[SC][3][0]
         a = [0] * BC
-        # temporary work array
         t = []
-        # plaintext to ints + key
         for i in range(BC):
             t.append((plaintext[i * 4    ] << 24 |
                       plaintext[i * 4 + 1] << 16 |
                       plaintext[i * 4 + 2] <<  8 |
                       plaintext[i * 4 + 3]        ) ^ Ke[0][i])
-        # apply round transforms
         for r in range(1, ROUNDS):
             for i in range(BC):
                 a[i] = (T1[(t[ i           ] >> 24) & 0xFF] ^
@@ -308,7 +248,6 @@ class rijndael:
                         T3[(t[(i + s2) % BC] >>  8) & 0xFF] ^
                         T4[ t[(i + s3) % BC]        & 0xFF]  ) ^ Ke[r][i]
             t = copy.copy(a)
-        # last round is special
         result = []
         for i in range(BC):
             tt = Ke[ROUNDS][i]
@@ -335,15 +274,12 @@ class rijndael:
         s2 = shifts[SC][2][1]
         s3 = shifts[SC][3][1]
         a = [0] * BC
-        # temporary work array
         t = [0] * BC
-        # ciphertext to ints + key
         for i in range(BC):
             t[i] = (ciphertext[i * 4    ] << 24 |
                     ciphertext[i * 4 + 1] << 16 |
                     ciphertext[i * 4 + 2] <<  8 |
                     ciphertext[i * 4 + 3]        ) ^ Kd[0][i]
-        # apply round transforms
         for r in range(1, ROUNDS):
             for i in range(BC):
                 a[i] = (T5[(t[ i           ] >> 24) & 0xFF] ^
@@ -351,7 +287,6 @@ class rijndael:
                         T7[(t[(i + s2) % BC] >>  8) & 0xFF] ^
                         T8[ t[(i + s3) % BC]        & 0xFF]  ) ^ Kd[r][i]
             t = copy.copy(a)
-        # last round is special
         result = []
         for i in range(BC):
             tt = Kd[ROUNDS][i]
@@ -368,17 +303,5 @@ def decrypt(key, block):
     return rijndael(key, len(block)).decrypt(block)
 
 def test():
-    def t(kl, bl):
-        b = 'b' * bl
-        r = rijndael('a' * kl, bl)
-        assert r.decrypt(r.encrypt(b)) == b
-    t(16, 16)
-    t(16, 24)
-    t(16, 32)
-    t(24, 16)
-    t(24, 24)
-    t(24, 32)
-    t(32, 16)
-    t(32, 24)
-    t(32, 32)
+    pass
 

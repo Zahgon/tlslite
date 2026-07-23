@@ -1,14 +1,4 @@
-# Authors: 
-#   Trevor Perrin
-#   Google - handling CertificateRequest.certificate_types
-#   Google (adapted by Sam Rushing and Marcelo Fernandez) - NPN support
-#   Dimitris Moraitis - Anon ciphersuites
-#   Yngve Pettersen (ported by Paul Sokolovsky) - TLS 1.2
-#   Hubert Kario - 'extensions' cleanup
-#
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Classes representing TLS messages."""
 
 from .utils.compat import *
 from .utils.cryptomath import *
@@ -50,12 +40,7 @@ class RecordHeader3(object):
 
     @property
     def typeName(self):
-        matching = [x[0] for x in ContentType.__dict__.items()
-                if x[1] == self.type]
-        if len(matching) == 0:
-            return "unknown(" + str(self.type) + ")"
-        else:
-            return str(matching[0])
+        pass
 
     def __str__(self):
         return "SSLv3 record,version({0[0]}.{0[1]}),"\
@@ -78,7 +63,6 @@ class RecordHeader2(object):
             raise SyntaxError()
         self.type = ContentType.handshake
         self.version = (2,0)
-        #We don't support 2-byte-length-headers; could be a problem
         self.length = p.get(1)
         return self
 
@@ -109,21 +93,11 @@ class Alert(object):
 
     @property
     def levelName(self):
-        matching = [x[0] for x in AlertLevel.__dict__.items()
-                if x[1] == self.level]
-        if len(matching) == 0:
-            return "unknown({0})".format(self.level)
-        else:
-            return str(matching[0])
+        pass
 
     @property
     def descriptionName(self):
-        matching = [x[0] for x in AlertDescription.__dict__.items()
-                if x[1] == self.description]
-        if len(matching) == 0:
-            return "unknown({0})".format(self.description)
-        else:
-            return str(matching[0])
+        pass
 
     def __str__(self):
         return "Alert, level:{0}, description:{1}".format(self.levelName,
@@ -145,30 +119,6 @@ class HandshakeMsg(object):
         return headerWriter.bytes + w.bytes
 
 class ClientHello(HandshakeMsg):
-    """
-    Class for handling the ClientHello TLS message, supports both the SSLv2
-    and SSLv3 style messages.
-
-    @type certificate_types: list
-    @ivar certificate_types: list of supported certificate types (deprecated)
-
-    @type srp_username: bytearray
-    @ivar srp_username: name of the user in SRP extension (deprecated)
-
-    @type supports_npn: boolean
-    @ivar supports_npn: NPN extension presence (deprecated)
-
-    @type tack: boolean
-    @ivar tack: TACK extension presence (deprecated)
-
-    @type server_name: bytearray
-    @ivar server_name: first host_name (type 0) present in SNI extension
-        (deprecated)
-
-    @type extensions: list of L{TLSExtension}
-    @ivar extensions: list of TLS extensions parsed from wire or to send, see
-        L{TLSExtension} and child classes for exact examples
-    """
     def __init__(self, ssl2=False):
         HandshakeMsg.__init__(self, HandshakeType.client_hello)
         self.ssl2 = ssl2
@@ -215,212 +165,50 @@ class ClientHello(HandshakeMsg):
                 self.cipher_suites, self.compression_methods, self.extensions)
 
     def getExtension(self, extType):
-        """
-        Returns extension of given type if present, None otherwise
-
-        @rtype: L{tlslite.extensions.TLSExtension}
-        @raise TLSInternalError: when there are multiple extensions of the
-            same type
-        """
-        if self.extensions is None:
-            return None
-
-        exts = [ext for ext in self.extensions if ext.extType == extType]
-        if len(exts) > 1:
-            raise TLSInternalError(
-                    "Multiple extensions of the same type present")
-        elif len(exts) == 1:
-            return exts[0]
-        else:
-            return None
+        pass
 
     def addExtension(self, ext):
-        """
-        Adds extension to internal list of extensions
-
-        @type ext: TLSExtension
-        @param ext: extension object to add to list
-        """
-        if self.extensions is None:
-            self.extensions = []
-
-        self.extensions.append(ext)
+        pass
 
     @property
     def certificate_types(self):
-        """
-        Returns the list of certificate types supported.
-
-        @deprecated: use extensions field to get the extension for inspection
-        """
-        cert_type = self.getExtension(ExtensionType.cert_type)
-        if cert_type is None:
-            # XXX backwards compatibility: TLSConnection
-            # depends on a default value of this property
-            return [CertificateType.x509]
-        else:
-            return cert_type.certTypes
+        pass
 
     @certificate_types.setter
     def certificate_types(self, val):
-        """
-        Sets the list of supported types to list given in L{val} if the
-        cert_type extension is present. Creates the extension and places it
-        last in the list otherwise.
-
-        @type val: list
-        @param val: list of supported certificate types by client encoded as
-            single byte integers
-        """
-        cert_type = self.getExtension(ExtensionType.cert_type)
-
-        if cert_type is None:
-            ext = ClientCertTypeExtension().create(val)
-            self.addExtension(ext)
-        else:
-            cert_type.certTypes = val
+        pass
 
     @property
     def srp_username(self):
-        """
-        Returns username for the SRP.
-
-        @deprecated: use extensions field to get the extension for inspection
-        """
-        srp_ext = self.getExtension(ExtensionType.srp)
-
-        if srp_ext is None:
-            return None
-        else:
-            return srp_ext.identity
+        pass
 
     @srp_username.setter
     def srp_username(self, name):
-        """
-        Sets the username for SRP.
-
-        @type name: bytearray
-        @param name: UTF-8 encoded username
-        """
-        srp_ext = self.getExtension(ExtensionType.srp)
-
-        if srp_ext is None:
-            ext = SRPExtension().create(name)
-            self.addExtension(ext)
-        else:
-            srp_ext.identity = name
+        pass
 
     @property
     def tack(self):
-        """
-        Returns whatever the client supports TACK
-
-        @rtype: boolean
-        @deprecated: use extensions field to get the extension for inspection
-        """
-        tack_ext = self.getExtension(ExtensionType.tack)
-
-        if tack_ext is None:
-            return False
-        else:
-            return True
+        pass
 
     @tack.setter
     def tack(self, present):
-        """
-        Creates or deletes the TACK extension.
-
-        @type present: boolean
-        @param present: True will create extension while False will remove
-            extension from client hello
-        """
-        if present:
-            tack_ext = self.getExtension(ExtensionType.tack)
-            if tack_ext is None:
-                ext = TLSExtension().create(ExtensionType.tack, bytearray(0))
-                self.addExtension(ext)
-            else:
-                return
-        else:
-            if self.extensions is None:
-                return
-            # remove all extensions of this type without changing reference
-            self.extensions[:] = [ext for ext in self.extensions if
-                                  ext.extType != ExtensionType.tack]
+        pass
 
     @property
     def supports_npn(self):
-        """
-        Returns whatever client supports NPN extension
-
-        @rtype: boolean
-        @deprecated: use extensions field to get the extension for inspection
-        """
-        npn_ext = self.getExtension(ExtensionType.supports_npn)
-
-        if npn_ext is None:
-            return False
-        else:
-            return True
+        pass
 
     @supports_npn.setter
     def supports_npn(self, present):
-        """
-        Creates or deletes the NPN extension
-
-        @type present: boolean
-        @param present: selects whatever to create or remove the extension
-            from list of supported ones
-        """
-        if present:
-            npn_ext = self.getExtension(ExtensionType.supports_npn)
-            if npn_ext is None:
-                ext = TLSExtension().create(
-                        ExtensionType.supports_npn,
-                        bytearray(0))
-                self.addExtension(ext)
-            else:
-                return
-        else:
-            if self.extensions is None:
-                return
-            #remove all extension of this type without changing reference
-            self.extensions[:] = [ext for ext in self.extensions if
-                                  ext.extType != ExtensionType.supports_npn]
+        pass
 
     @property
     def server_name(self):
-        """
-        Returns first host_name present in SNI extension
-
-        @rtype: bytearray
-        @deprecated: use extensions field to get the extension for inspection
-        """
-        sni_ext = self.getExtension(ExtensionType.server_name)
-        if sni_ext is None:
-            return bytearray(0)
-        else:
-            if len(sni_ext.hostNames) > 0:
-                return sni_ext.hostNames[0]
-            else:
-                return bytearray(0)
+        pass
 
     @server_name.setter
     def server_name(self, hostname):
-        """
-        Sets the first host_name present in SNI extension
-
-        @type hostname: bytearray
-        @param hostname: name of the host_name to set
-        """
-        sni_ext = self.getExtension(ExtensionType.server_name)
-        if sni_ext is None:
-            sni_ext = SNIExtension().create(hostname)
-            self.addExtension(sni_ext)
-        else:
-            names = list(sni_ext.hostNames)
-            names[0] = hostname
-            sni_ext.hostNames = names
+        pass
 
     def create(self, version, random, session_id, cipher_suites,
                certificate_types=None, srpUsername=None,
@@ -497,7 +285,6 @@ class ClientHello(HandshakeMsg):
                 self.random = bytearray(zeroBytes) + self.random
             self.compression_methods = [0]#Fake this value
 
-            #We're not doing a stopLengthCheck() for SSLv2, oh well..
         else:
             p.startLengthCheck(3)
             self.client_version = (p.get(1), p.get(1))
@@ -533,36 +320,6 @@ class ClientHello(HandshakeMsg):
         return self.postWrite(w)
 
 class ServerHello(HandshakeMsg):
-    """server_hello message
-
-    @type server_version: tuple
-    @ivar server_version: protocol version encoded as two int tuple
-
-    @type random: bytearray
-    @ivar random: server random value
-
-    @type session_id: bytearray
-    @ivar session_id: session identifier for resumption
-
-    @type cipher_suite: int
-    @ivar cipher_suite: server selected cipher_suite
-
-    @type compression_method: int
-    @ivar compression_method: server selected compression method
-
-    @type next_protos: list of bytearray
-    @ivar next_protos: list of advertised protocols in NPN extension
-
-    @type next_protos_advertised: list of bytearray
-    @ivar next_protos_advertised: list of protocols advertised in NPN extension
-
-    @type certificate_type: int
-    @ivar certificate_type: certificate type selected by server
-
-    @type extensions: list
-    @ivar extensions: list of TLS extensions present in server_hello message,
-        see L{TLSExtension} and child classes for exact examples
-    """
     def __init__(self):
         """Initialise ServerHello object"""
 
@@ -599,138 +356,42 @@ class ServerHello(HandshakeMsg):
                 self.extensions)
 
     def getExtension(self, extType):
-        """Return extension of a given type, None if extension of given type
-        is not present
-
-        @rtype: L{TLSExtension}
-        @raise TLSInternalError: multiple extensions of the same type present
-        """
-        if self.extensions is None:
-            return None
-
-        exts = [ext for ext in self.extensions if ext.extType == extType]
-        if len(exts) > 1:
-            raise TLSInternalError(
-                    "Multiple extensions of the same type present")
-        elif len(exts) == 1:
-            return exts[0]
-        else:
-            return None
+        pass
 
     def addExtension(self, ext):
-        """
-        Add extension to internal list of extensions
-
-        @type ext: TLSExtension
-        @param ext: extension to add to list
-        """
-        if self.extensions is None:
-            self.extensions = []
-        self.extensions.append(ext)
+        pass
 
     @property
     def tackExt(self):
-        """ Returns the TACK extension
-        """
-        if self._tack_ext is None:
-            ext = self.getExtension(ExtensionType.tack)
-            if ext is None or not tackpyLoaded:
-                return None
-            else:
-                self._tack_ext = TackExtension(ext.extData)
-        return self._tack_ext
+        pass
 
     @tackExt.setter
     def tackExt(self, val):
-        """ Set the TACK extension
-        """
-        self._tack_ext = val
-        # makes sure that extensions are included in the on the wire encoding
-        if not val is None:
-            if self.extensions is None:
-                self.extensions = []
+        pass
 
     @property
     def certificate_type(self):
-        """Returns the certificate type selected by server
-
-        @rtype: int
-        """
-        cert_type = self.getExtension(ExtensionType.cert_type)
-        if cert_type is None:
-            # XXX backwards compatibility, TLSConnection expects the default
-            # value to be that
-            return CertificateType.x509
-        return cert_type.cert_type
+        pass
 
     @certificate_type.setter
     def certificate_type(self, val):
-        """Sets the certificate type supported
-
-        @type val: int
-        @param val: type of certificate
-        """
-        # XXX backwards compatibility, 0 means x.509 and should not be sent
-        if val == 0 or val is None:
-            return
-
-        cert_type = self.getExtension(ExtensionType.cert_type)
-        if cert_type is None:
-            ext = ServerCertTypeExtension().create(val)
-            self.addExtension(ext)
-        else:
-            cert_type.cert_type = val
+        pass
 
     @property
     def next_protos(self):
-        """Returns the advertised protocols in NPN extension
-
-        @rtype: list of bytearrays
-        """
-        npn_ext = self.getExtension(ExtensionType.supports_npn)
-
-        if npn_ext is None:
-            return None
-        else:
-            return npn_ext.protocols
+        pass
 
     @next_protos.setter
     def next_protos(self, val):
-        """Sets the advertised protocols in NPN extension
-
-        @type val: list
-        @param val: list of protocols to advertise as UTF-8 encoded names
-        """
-        if val is None:
-            return
-        else:
-        # convinience function, make sure the values are properly encoded
-            val = [ bytearray(x) for x in val ]
-
-        npn_ext = self.getExtension(ExtensionType.supports_npn)
-
-        if npn_ext is None:
-            ext = NPNExtension().create(val)
-            self.addExtension(ext)
-        else:
-            npn_ext.protocols = val
+        pass
 
     @property
     def next_protos_advertised(self):
-        """Returns the advertised protocols in NPN extension
-
-        @rtype: list of bytearrays
-        """
-        return self.next_protos
+        pass
 
     @next_protos_advertised.setter
     def next_protos_advertised(self, val):
-        """Sets the advertised protocols in NPN extension
-
-        @type val: list
-        @param val: list of protocols to advertise as UTF-8 encoded names
-        """
-        self.next_protos = val
+        pass
 
     def create(self, version, random, session_id, cipher_suite,
                certificate_type, tackExt, next_protos_advertised,
@@ -825,11 +486,9 @@ class Certificate(HandshakeMsg):
                 certificate_list = self.certChain.x509List
             else:
                 certificate_list = []
-            #determine length
             for cert in certificate_list:
                 bytes = cert.writeBytes()
                 chainLength += len(bytes)+3
-            #add bytes
             w.add(chainLength, 3)
             for cert in certificate_list:
                 bytes = cert.writeBytes()
@@ -879,11 +538,9 @@ class CertificateRequest(HandshakeMsg):
             w.add(len(w2.bytes), 2)
             w.bytes += w2.bytes
         caLength = 0
-        #determine length
         for ca_dn in self.certificate_authorities:
             caLength += len(ca_dn)+2
         w.add(caLength, 2)
-        #add bytes
         for ca_dn in self.certificate_authorities:
             w.addVarSeq(ca_dn, 1, 2)
         return self.postWrite(w)
@@ -896,24 +553,16 @@ class ServerKeyExchange(HandshakeMsg):
         self.srp_g = 0
         self.srp_s = bytearray(0)
         self.srp_B = 0
-        # Anon DH params:
         self.dh_p = 0
         self.dh_g = 0
         self.dh_Ys = 0
         self.signature = bytearray(0)
 
     def createSRP(self, srp_N, srp_g, srp_s, srp_B):
-        self.srp_N = srp_N
-        self.srp_g = srp_g
-        self.srp_s = srp_s
-        self.srp_B = srp_B
-        return self
+        pass
     
     def createDH(self, dh_p, dh_g, dh_Ys):
-        self.dh_p = dh_p
-        self.dh_g = dh_g
-        self.dh_Ys = dh_Ys
-        return self
+        pass
 
     def parse(self, p):
         p.startLengthCheck(3)
@@ -949,8 +598,7 @@ class ServerKeyExchange(HandshakeMsg):
         return self.postWrite(w)
 
     def hash(self, clientRandom, serverRandom):
-        bytes = clientRandom + serverRandom + self.write(False)[4:]
-        return MD5(bytes) + SHA1(bytes)
+        pass
 
 class ServerHelloDone(HandshakeMsg):
     def __init__(self):
@@ -977,16 +625,13 @@ class ClientKeyExchange(HandshakeMsg):
         self.encryptedPreMasterSecret = bytearray(0)
 
     def createSRP(self, srp_A):
-        self.srp_A = srp_A
-        return self
+        pass
 
     def createRSA(self, encryptedPreMasterSecret):
-        self.encryptedPreMasterSecret = encryptedPreMasterSecret
-        return self
+        pass
     
     def createDH(self, dh_Yc):
-        self.dh_Yc = dh_Yc
-        return self
+        pass
     
     def parse(self, p):
         p.startLengthCheck(3)

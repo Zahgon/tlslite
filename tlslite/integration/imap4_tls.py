@@ -1,18 +1,13 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""TLS Lite + imaplib."""
 
 import socket
 from imaplib import IMAP4
 from tlslite.tlsconnection import TLSConnection
 from tlslite.integration.clienthelper import ClientHelper
 
-# IMAP TLS PORT
 IMAP4_TLS_PORT = 993
 
 class IMAP4_TLS(IMAP4, ClientHelper):
-    """This class extends L{imaplib.IMAP4} with TLS support."""
 
     def __init__(self, host = '', port = IMAP4_TLS_PORT,
                  username=None, password=None,
@@ -82,15 +77,4 @@ class IMAP4_TLS(IMAP4, ClientHelper):
 
 
     def open(self, host = '', port = IMAP4_TLS_PORT):
-        """Setup connection to remote server on "host:port".
-
-        This connection will be used by the routines:
-        read, readline, send, shutdown.
-        """
-        self.host = host
-        self.port = port
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((host, port))
-        self.sock = TLSConnection(self.sock)
-        ClientHelper._handshake(self, self.sock)
-        self.file = self.sock.makefile('rb')
+        pass

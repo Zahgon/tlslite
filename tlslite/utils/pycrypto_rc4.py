@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""PyCrypto RC4 implementation."""
 
 from .cryptomath import *
 from .rc4 import *
@@ -10,7 +7,7 @@ if pycryptoLoaded:
     import Crypto.Cipher.ARC4
 
     def new(key):
-        return PyCrypto_RC4(key)
+        pass
 
     class PyCrypto_RC4(RC4):
 

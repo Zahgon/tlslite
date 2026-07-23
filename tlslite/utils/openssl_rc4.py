@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""OpenSSL/M2Crypto RC4 implementation."""
 
 from .cryptomath import *
 from .rc4 import RC4
@@ -9,7 +6,7 @@ from .rc4 import RC4
 if m2cryptoLoaded:
 
     def new(key):
-        return OpenSSL_RC4(key)
+        pass
 
     class OpenSSL_RC4(RC4):
 

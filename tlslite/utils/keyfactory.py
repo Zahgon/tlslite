@@ -1,9 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Factory functions for asymmetric cryptography.
-@sort: generateRSAKey, parsePEMKey, parseAsPublicKey
-"""
 
 from .compat import *
 
@@ -17,27 +12,10 @@ if cryptomath.m2cryptoLoaded:
 if cryptomath.pycryptoLoaded:
     from .pycrypto_rsakey import PyCrypto_RSAKey
 
-# **************************************************************************
-# Factory Functions for RSA Keys
-# **************************************************************************
 
 def generateRSAKey(bits, implementations=["openssl", "python"]):
-    """Generate an RSA key with the specified bit length.
+    pass
 
-    @type bits: int
-    @param bits: Desired bit length of the new key's modulus.
-
-    @rtype: L{tlslite.utils.rsakey.RSAKey}
-    @return: A new RSA private key.
-    """
-    for implementation in implementations:
-        if implementation == "openssl" and cryptomath.m2cryptoLoaded:
-            return OpenSSL_RSAKey.generate(bits)
-        elif implementation == "python":
-            return Python_RSAKey.generate(bits)
-    raise ValueError("No acceptable implementations")
-
-#Parse as an OpenSSL or Python key
 def parsePEMKey(s, private=False, public=False, passwordCallback=None,
                 implementations=["openssl", "python"]):
     """Parse a PEM-format key.
@@ -125,30 +103,10 @@ def _parseKeyHelper(key, private, public):
     return key
 
 def parseAsPublicKey(s):
-    """Parse a PEM-formatted public key.
-
-    @type s: str
-    @param s: A string containing a PEM-encoded public or private key.
-
-    @rtype: L{tlslite.utils.rsakey.RSAKey}
-    @return: An RSA public key.
-
-    @raise SyntaxError: If the key is not properly formatted.
-    """
-    return parsePEMKey(s, public=True)
+    pass
 
 def parsePrivateKey(s):
-    """Parse a PEM-formatted private key.
-
-    @type s: str
-    @param s: A string containing a PEM-encoded private key.
-
-    @rtype: L{tlslite.utils.rsakey.RSAKey}
-    @return: An RSA private key.
-
-    @raise SyntaxError: If the key is not properly formatted.
-    """
-    return parsePEMKey(s, private=True)
+    pass
 
 def _createPublicKey(key):
     """

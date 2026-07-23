@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Class for post-handshake certificate checking."""
 
 from .x509 import X509
 from .x509certchain import X509CertChain
@@ -9,16 +6,6 @@ from .errors import *
 
 
 class Checker(object):
-    """This class is passed to a handshake function to check the other
-    party's certificate chain.
-
-    If a handshake function completes successfully, but the Checker
-    judges the other party's certificate chain to be missing or
-    inadequate, a subclass of
-    L{tlslite.errors.TLSAuthenticationError} will be raised.
-
-    Currently, the Checker can check an X.509 chain.
-    """
 
     def __init__(self, 
                  x509Fingerprint=None,

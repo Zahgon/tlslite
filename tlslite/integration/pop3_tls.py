@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""TLS Lite + poplib."""
 
 import socket
 from poplib import POP3, POP3_SSL_PORT
@@ -9,7 +6,6 @@ from tlslite.tlsconnection import TLSConnection
 from tlslite.integration.clienthelper import ClientHelper
 
 class POP3_TLS(POP3, ClientHelper):
-    """This class extends L{poplib.POP3} with TLS support."""
 
     def __init__(self, host, port = POP3_SSL_PORT,
                  timeout=socket._GLOBAL_DEFAULT_TIMEOUT,

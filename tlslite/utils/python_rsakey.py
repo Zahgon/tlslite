@@ -1,7 +1,4 @@
-# Author: Trevor Perrin
-# See the LICENSE file for legal information regarding use of this file.
 
-"""Pure-Python RSA implementation."""
 
 from .cryptomath import *
 from .asn1parser import ASN1Parser
@@ -27,34 +24,25 @@ class Python_RSAKey(RSAKey):
         return self.d != 0
 
     def _rawPrivateKeyOp(self, m):
-        #Create blinding values, on the first pass:
         if not self.blinder:
             self.unblinder = getRandomNumber(2, self.n)
             self.blinder = powMod(invMod(self.unblinder, self.n), self.e,
                                   self.n)
 
-        #Blind the input
         m = (m * self.blinder) % self.n
 
-        #Perform the RSA operation
         c = self._rawPrivateKeyOpHelper(m)
 
-        #Unblind the output
         c = (c * self.unblinder) % self.n
 
-        #Update blinding values
         self.blinder = (self.blinder * self.blinder) % self.n
         self.unblinder = (self.unblinder * self.unblinder) % self.n
 
-        #Return the output
         return c
 
 
     def _rawPrivateKeyOpHelper(self, m):
-        #Non-CRT version
-        #c = powMod(m, self.d, self.n)
 
-        #CRT version  (~3x faster)
         s1 = powMod(m, self.dP, self.p)
         s2 = powMod(m, self.dQ, self.q)
         h = ((s1 - s2) * self.qInv) % self.p
@@ -65,22 +53,10 @@ class Python_RSAKey(RSAKey):
         m = powMod(c, self.e, self.n)
         return m
 
-    def acceptsPassword(self): return False
+    pass
 
     def generate(bits):
-        key = Python_RSAKey()
-        p = getRandomPrime(bits//2, False)
-        q = getRandomPrime(bits//2, False)
-        t = lcm(p-1, q-1)
-        key.n = p * q
-        key.e = 65537
-        key.d = invMod(key.e, t)
-        key.p = p
-        key.q = q
-        key.dP = key.d % (p-1)
-        key.dQ = key.d % (q-1)
-        key.qInv = invMod(q, p)
-        return key
+        pass
     generate = staticmethod(generate)
 
     def parsePEM(s, passwordCallback=None):
@@ -107,10 +83,8 @@ class Python_RSAKey(RSAKey):
         if list(rsaOID) != [6, 9, 42, 134, 72, 134, 247, 13, 1, 1, 1, 5, 0]:
             raise SyntaxError("Unrecognized AlgorithmIdentifier")
 
-        #Get the privateKey
         privateKeyP = p.getChild(2)
 
-        #Adjust for OCTET STRING encapsulation
         privateKeyP = ASN1Parser(privateKeyP.value)
 
         return Python_RSAKey._parseASN1PrivateKey(privateKeyP)
